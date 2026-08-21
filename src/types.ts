@@ -13,11 +13,16 @@ export type FlowEdge = {
   to: string
 }
 
+export type StageTextPart = {
+  text: string
+  ruby?: string
+}
+
 export type StageDefinition = {
   id: string
   title: string
   difficulty: 'かんたん' | 'ふつう' | 'むずかしい'
-  description: string
+  description: StageTextPart[]
   availableActions: Action[]
   start: { x: number; y: number }
   snack: { x: number; y: number }
