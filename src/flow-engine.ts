@@ -55,18 +55,23 @@ export function validateFlow(nodes: FlowNode[], edges: FlowEdge[]): ValidationRe
 }
 
 export function applyAction(state: RunState, action: FlowNode['action'], stage: StageDefinition): RunState {
-  if (action === 'start' || action === 'end') return state
+  if (action === 'start') return state
+  if (action === 'end') {
+    return state.status === 'success'
+      ? state
+      : { ...state, status: 'error', message: 'おもちゃを とどける まえに、おわりに なっているよ。' }
+  }
   if (action === 'move') {
     const next = { ...state.cat, x: state.cat.x + 1 }
     if (next.x >= stage.grid.columns) return { ...state, status: 'error', message: 'これいじょう すすむと、みちから はずれちゃうよ。' }
     return { ...state, cat: next, message: 'てくてく…' }
   }
   if (action === 'pickUp') {
-    if (state.cat.x !== stage.snack.x || state.cat.y !== stage.snack.y) return { ...state, status: 'error', message: 'おやつが ある ばしょで「ひろう」を つかおう。' }
-    if (state.hasSnack) return { ...state, status: 'error', message: 'おやつは もう もっているよ。' }
-    return { ...state, hasSnack: true, message: 'おやつを ひろったよ！' }
+    if (state.cat.x !== stage.toy.x || state.cat.y !== stage.toy.y) return { ...state, status: 'error', message: 'おもちゃが ある ばしょで「ひろう」を つかおう。' }
+    if (state.hasToy) return { ...state, status: 'error', message: 'おもちゃは もう もっているよ。' }
+    return { ...state, hasToy: true, message: 'おもちゃを ひろったよ！' }
   }
-  if (state.cat.x !== stage.delivery.x || state.cat.y !== stage.delivery.y) return { ...state, status: 'error', message: 'とどける ばしょまで すすもう。' }
-  if (!state.hasSnack) return { ...state, status: 'error', message: 'さきに おやつを ひろおう。' }
-  return { ...state, status: 'success', message: 'おやつを とどけられたよ！' }
+  if (state.cat.x !== stage.delivery.x || state.cat.y !== stage.delivery.y) return { ...state, status: 'error', message: 'ヒト社員の ばしょまで すすもう。' }
+  if (!state.hasToy) return { ...state, status: 'error', message: 'さきに おもちゃを ひろおう。' }
+  return { ...state, status: 'success', message: 'おもちゃを ヒト社員に とどけられたよ！' }
 }

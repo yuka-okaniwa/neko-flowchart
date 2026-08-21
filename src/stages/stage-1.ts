@@ -1,13 +1,16 @@
 import type { StageDefinition } from '../types'
 
 export const stage1: StageDefinition = {
-  id: 'snack-delivery',
-  title: 'おやつを とどけよう',
+  id: 'toy-delivery',
+  title: 'おもちゃを とどけよう',
   difficulty: 'かんたん',
   description: [
-    { text: 'ねこ社員に、おやつを ' },
-    { text: '拾', ruby: 'ひろ' },
-    { text: 'って ' },
+    { text: 'ねこ' },
+    { text: '社員', ruby: 'しゃいん' },
+    { text: 'に、おもちゃ🧸をひろって ' },
+    { text: 'ヒト' },
+    { text: '社員', ruby: 'しゃいん' },
+    { text: '🧑‍💼に ' },
     { text: '届', ruby: 'とど' },
     { text: 'ける ' },
     { text: '手順', ruby: 'てじゅん' },
@@ -18,7 +21,7 @@ export const stage1: StageDefinition = {
   // 開始・終了は編集領域に固定で用意する。ここには何度でも追加できる処理だけを置く。
   availableActions: ['move', 'pickUp', 'deliver'],
   start: { x: 0, y: 1 },
-  snack: { x: 1, y: 1 },
+  toy: { x: 1, y: 1 },
   delivery: { x: 3, y: 1 },
   grid: { columns: 4, rows: 3 },
 }

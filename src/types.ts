@@ -25,14 +25,14 @@ export type StageDefinition = {
   description: StageTextPart[]
   availableActions: Action[]
   start: { x: number; y: number }
-  snack: { x: number; y: number }
+  toy: { x: number; y: number }
   delivery: { x: number; y: number }
   grid: { columns: number; rows: number }
 }
 
 export type RunState = {
   cat: { x: number; y: number }
-  hasSnack: boolean
+  hasToy: boolean
   status: 'idle' | 'running' | 'success' | 'error'
   message: string
 }

@@ -108,12 +108,15 @@ button {
 }
 .intro p {
   margin: 0;
+  color: #8b7080;
   font-weight: 700;
+  font-size: 16px;
 }
 .intro span {
   margin-left: auto;
   color: #8b7080;
-  font-size: 13px;
+  font-weight: 700;
+  font-size: 16px;
 }
 .cat-portrait {
   font-size: 38px;
@@ -184,6 +187,17 @@ button {
   padding: 0 18px;
   border-bottom: 2px dashed #eddde3;
 }
+.editor-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.arrow-help {
+  margin: 0;
+  color: #8b7080;
+  font-size: 12px;
+  font-weight: 700;
+}
 .canvas {
   position: relative;
   min-height: 530px;
@@ -203,7 +217,7 @@ button {
   pointer-events: none;
 }
 .edge-visible {
-  stroke: #b86f88;
+  stroke: #76ae58;
   stroke-width: 4;
   pointer-events: none;
 }
@@ -213,8 +227,14 @@ button {
   pointer-events: stroke;
   cursor: pointer;
 }
+.edge-preview {
+  pointer-events: none;
+  stroke: #76ae58;
+  stroke-width: 4;
+  stroke-dasharray: 8 5;
+}
 .edge-layer marker path {
-  fill: #b86f88;
+  fill: #76ae58;
 }
 .flow-node {
   position: absolute;
@@ -243,6 +263,15 @@ button {
   border-color: #e85252;
   box-shadow: 0 0 0 4px #ffd4d4;
 }
+
+.drag-preview {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0.85;
+  transform: translate(-50%, -50%) rotate(-2deg);
+}
+
 .delete-node {
   position: absolute;
   z-index: 3;
@@ -275,19 +304,27 @@ button {
 .connector {
   position: absolute;
   z-index: 2;
-  width: 20px;
-  height: 20px;
-  left: calc(50% - 10px);
-  border: 3px solid white;
-  border-radius: 50%;
-  background: #b96f88;
+  width: 44px;
+  height: 44px;
+  left: calc(50% - 22px);
   touch-action: none;
 }
 .connector.input {
-  top: -11px;
+  top: -22px;
 }
 .connector.output {
-  bottom: -11px;
+  bottom: -22px;
+}
+.connector::before {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 20px;
+  height: 20px;
+  content: '';
+  background: #b96f88;
+  border: 3px solid white;
+  border-radius: 50%;
 }
 .empty-canvas,
 .connection-hint {
@@ -328,19 +365,39 @@ button {
   font-size: clamp(20px, 2.6vw, 37px);
 }
 .cat {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   z-index: 2;
-  transform: translateY(-2px);
+  transform: translate(-50%, -50%);
   transition: transform 0.35s ease;
 }
 .cat.happy {
   animation: bounce 0.45s infinite alternate;
 }
+
+.cat.confused {
+  animation: wobble 0.2s ease-in-out 5;
+}
 .target {
   position: absolute;
+  top: 50%;
+  left: 50%;
   opacity: 0.8;
+  transform: translate(-50%, -50%);
 }
-.snack {
+.toy {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   z-index: 1;
+  transform: translate(-50%, -50%);
+}
+.cat-with-toy .toy {
+  top: 30%;
+}
+.cat-with-toy .cat {
+  top: 70%;
 }
 .speech {
   display: flex;
@@ -393,8 +450,22 @@ button {
   background: #d87a98;
 }
 @keyframes bounce {
+  from {
+    transform: translate(-50%, -50%);
+  }
   to {
-    transform: translateY(-12px) rotate(7deg);
+    transform: translate(-50%, calc(-50% - 12px)) rotate(7deg);
+  }
+}
+
+@keyframes wobble {
+  0%,
+  100% {
+    transform: translate(calc(-50% - 8px), -50%) rotate(-8deg);
+  }
+
+  50% {
+    transform: translate(calc(-50% + 8px), -50%) rotate(8deg);
   }
 }
 @media (max-width: 1050px) {
@@ -408,4 +479,8 @@ button {
   .intro span {
     display: none;
   }
+}
+.stage-description{
+  font-size: 16px;
+  color: #4c3d47;
 }
