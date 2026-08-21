@@ -1,0 +1,7 @@
+node_modules
+dist
+.DS_Store
+
+# This workspace has global ignore rules for these project files.
+!.gitignore
+!Dockerfile

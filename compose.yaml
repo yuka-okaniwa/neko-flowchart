@@ -1,0 +1,7 @@
+services:
+  neko-flowchart:
+    build:
+      context: .
+    ports:
+      - "18080:80"
+    restart: unless-stopped
