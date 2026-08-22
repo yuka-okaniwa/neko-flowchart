@@ -86,6 +86,21 @@ button {
   background: #fff;
   border: 2px solid #ead7df;
 }
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.home-button,
+.legend-button {
+  padding: 9px 13px;
+  color: #7c5364;
+  font-weight: 900;
+  background: #fff4f7;
+  border: 2px solid #e5b6c5;
+  border-radius: 12px;
+}
 .run-button {
   background: #9AD97A;
   color: white;
@@ -197,6 +212,10 @@ button {
   color: #8b7080;
   font-size: 12px;
   font-weight: 700;
+}
+
+.legend-button {
+  font-size: 13px;
 }
 .canvas {
   position: relative;
@@ -448,6 +467,215 @@ button {
 .success-overlay button {
   color: white;
   background: #d87a98;
+}
+
+/* Stage selection home */
+.home-screen {
+  display: flex;
+  flex-direction: column;
+}
+
+.home-hero {
+  max-width: 800px;
+  margin: 72px auto 38px;
+  text-align: center;
+}
+
+.home-hero > span {
+  display: block;
+  font-size: 72px;
+}
+
+.home-hero h1 {
+  margin: 8px 0;
+  font-size: clamp(30px, 4vw, 52px);
+}
+
+.home-hero p {
+  margin: 0;
+  color: #765766;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.stage-select {
+  width: min(900px, 92vw);
+  margin: 0 auto;
+}
+
+.stage-select h2 {
+  margin: 0 0 16px;
+  font-size: 24px;
+}
+
+.stage-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 18px;
+}
+
+.stage-card {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  min-height: 185px;
+  padding: 24px;
+  color: #503d48;
+  text-align: left;
+  background: #fff;
+  border: 3px solid #e6bdca;
+  border-radius: 24px;
+  box-shadow: 0 6px 0 rgba(166, 91, 120, 0.15);
+}
+
+.stage-card:hover,
+.stage-card:focus-visible {
+  border-color: #d87a98;
+  transform: translateY(-3px);
+}
+
+.stage-card-number {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  color: white;
+  font-size: 22px;
+  font-weight: 900;
+  background: #d87a98;
+  border-radius: 50%;
+  place-items: center;
+}
+
+.stage-card .difficulty {
+  width: max-content;
+}
+
+.stage-card strong {
+  font-size: 22px;
+}
+
+.stage-card small {
+  color: #876d7a;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* Flowchart legend */
+.legend-overlay {
+  position: fixed;
+  z-index: 30;
+  inset: 0;
+  display: grid;
+  padding: 20px;
+  background: rgba(75, 47, 60, 0.36);
+  place-items: center;
+}
+
+.legend-modal {
+  position: relative;
+  width: min(650px, 94vw);
+  padding: 34px;
+  background: #fffafd;
+  border: 6px solid #edb7c8;
+  border-radius: 28px;
+  box-shadow: 0 15px 40px rgba(89, 61, 73, 0.28);
+}
+
+.legend-modal h2 {
+  margin: 0 0 8px;
+  font-size: 28px;
+}
+
+.legend-modal > p {
+  margin: 0 0 20px;
+  color: #705664;
+  font-weight: 700;
+}
+
+.legend-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  background: #c66180;
+  border: 3px solid white;
+  border-radius: 50%;
+}
+
+.legend-close::before,
+.legend-close::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 3px;
+  content: '';
+  background: white;
+  border-radius: 3px;
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.legend-close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.legend-items {
+  display: grid;
+  gap: 10px;
+}
+
+.legend-items > div {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: center;
+  gap: 15px;
+  padding: 10px;
+  background: #fff1f5;
+  border-radius: 14px;
+}
+
+.legend-items p {
+  margin: 0;
+  font-weight: 700;
+}
+
+.legend-symbol {
+  display: grid;
+  min-height: 48px;
+  padding: 8px;
+  font-weight: 900;
+  text-align: center;
+  background: #fff;
+  border: 3px solid #d38ca2;
+  place-items: center;
+}
+
+.legend-symbol.terminal {
+  border-radius: 99px;
+}
+
+.legend-symbol.process {
+  border-radius: 8px;
+}
+
+.legend-arrow {
+  color: #76ae58;
+  font-size: 54px;
+  font-weight: 900;
+  text-align: center;
+}
+
+.legend-ok {
+  display: block;
+  margin: 22px auto 0;
+  padding: 12px 32px;
+  color: white;
+  font-weight: 900;
+  background: #d87a98;
+  border: 0;
+  border-radius: 14px;
 }
 @keyframes bounce {
   from {

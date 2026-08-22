@@ -2,6 +2,7 @@ import type { FlowEdge, FlowNode, RunState, StageDefinition } from './types'
 
 export type ValidationResult = { ok: true; order: FlowNode[] } | { ok: false; invalidIds: string[]; message: string }
 
+/** 図形と矢印が、開始から終了まで実行できるフローチャートか検証する。 */
 export function validateFlow(nodes: FlowNode[], edges: FlowEdge[]): ValidationResult {
   const starts = nodes.filter((node) => node.action === 'start')
   const ends = nodes.filter((node) => node.action === 'end')
@@ -54,6 +55,7 @@ export function validateFlow(nodes: FlowNode[], edges: FlowEdge[]): ValidationRe
   return { ok: true, order }
 }
 
+/** 1つの処理図形を実行し、猫・おもちゃ・成功失敗の状態を更新する。 */
 export function applyAction(state: RunState, action: FlowNode['action'], stage: StageDefinition): RunState {
   if (action === 'start') return state
   if (action === 'end') {
