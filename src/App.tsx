@@ -1,41 +1,56 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 
 import { applyAction, validateFlow } from './flow-engine'
+import { catEmployees } from './cat-employees'
+import { FlowchartGuide } from './FlowchartGuide'
 import { stages } from './stages'
+import { canConnectTutorialNodes, canPlaceTutorialAction, getCurrentTutorialStep, isTutorialConnectionTarget, tutorialMessage } from './tutorial'
 import type { Action, FlowEdge, FlowNode, RunState, StageDefinition } from './types'
 import './styles.css'
 
 const NODE_WIDTH = 152
 const NODE_HEIGHT = 70
+const DECISION_YES_CONNECTOR = { x: NODE_WIDTH / 2, y: 80 }
+const DECISION_NO_CONNECTOR = { x: NODE_WIDTH + 10, y: 28 }
+let nodeSequence = 0
 
 const actionLabels: Record<Action, string> = {
-  start: 'はじめ', end: 'おわり', move: '1マス すすむ', pickUp: 'おもちゃを ひろう', deliver: 'おもちゃを とどける',
+  start: 'はじめ', end: 'おわり', move: '1マス すすむ', pickUp: 'おもちゃを\nひろう', pickUpSnack: 'おやつを\nひろう', deliver: 'おもちゃを\nとどける', decision: 'おもちゃを\nみつけた？', openBox: 'はこを\nあける', eat: 'おやつを\nたべる',
 }
 
 /** 指定したステージを開始するための猫の初期状態を作成する。 */
 function freshRunState(stage: StageDefinition): RunState {
-  return { cat: { ...stage.start }, hasToy: false, status: 'idle', message: 'フローチャートを つくってから、「うごかす」を おしてね。' }
+  return { cat: { ...stage.start }, hasToy: false, snackCollected: false, heldItem: 'none', boxOpened: false, boxContent: stage.box?.content ?? null, afterDecision: false, status: 'idle', message: 'フローチャートを つくってから、「うごかす」を おしてね。' }
 }
 
 /** 配置した図形を一意に識別するIDを生成する。 */
 function makeId(action: Action) {
-  return `${action}-${crypto.randomUUID()}`
+  // crypto.randomUUID() は HTTPS / localhost 以外では使えないため、
+  // ローカルIPを HTTP で開く端末でも動く連番ベースのIDを使用する。
+  nodeSequence += 1
+  return `${action}-${Date.now().toString(36)}-${nodeSequence}`
 }
 
 /** ホーム画面、フローチャート編集、実行結果を管理するアプリ本体。 */
 export default function App() {
+  // 将来の猫選択UIでは、このIDを選択した猫のIDへ更新する。
+  const [selectedCatId] = useState(catEmployees[0].id)
+  const selectedCat = catEmployees.find((catEmployee) => catEmployee.id === selectedCatId) ?? catEmployees[0]
   const [activeStage, setActiveStage] = useState<StageDefinition>(stages[0])
-  const [screen, setScreen] = useState<'home' | 'stage'>('home')
+  const [screen, setScreen] = useState<'home' | 'stage' | 'guide'>('home')
   const [showLegend, setShowLegend] = useState(false)
   const stage = activeStage
+  // ステージごとの判断文がある場合は、判断図形の表示に使う。
+  const labelFor = (action: Action) => action === 'decision' && stage.decision ? stage.decision.question : actionLabels[action]
   const [nodes, setNodes] = useState<FlowNode[]>([])
   const [edges, setEdges] = useState<FlowEdge[]>([])
   const [invalidIds, setInvalidIds] = useState<string[]>([])
   const [runState, setRunState] = useState<RunState>(() => freshRunState(stages[0]))
+  const [errorShakeKey, setErrorShakeKey] = useState(0)
   const [dragging, setDragging] = useState<{ id: string; offsetX: number; offsetY: number } | null>(null)
   const [newAction, setNewAction] = useState<Action | null>(null)
   const [newActionPreview, setNewActionPreview] = useState<{ x: number; y: number } | null>(null)
-  const [connecting, setConnecting] = useState<string | null>(null)
+  const [connecting, setConnecting] = useState<{ id: string; branch?: 'yes' | 'no' } | null>(null)
   const [connectionPreview, setConnectionPreview] = useState<{ x: number; y: number } | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
 
@@ -50,15 +65,45 @@ export default function App() {
     ]
   }
 
+  // チュートリアルの進行判定は専用モジュールへ集約し、画面では結果だけを使う。
+  const tutorialStep = getCurrentTutorialStep(stage, nodes, edges)
+
+  /** チュートリアルの案内に合う記号だけを、編集領域へ追加する。 */
+  function startNewAction(event: ReactPointerEvent, action: Action) {
+    event.preventDefault()
+    if (!canPlaceTutorialAction(tutorialStep, action)) {
+      setRunState({ ...freshRunState(stage), message: 'いまは、ひかっている きごうを つかってみよう。' })
+      return
+    }
+    setNewAction(action)
+    setNewActionPreview({ x: event.clientX, y: event.clientY })
+  }
+
   // 初回表示時に開始・終了の図形を編集領域へ配置する。
   useEffect(() => {
     setNodes(initialNodes())
   }, [])
 
+  // ステージ画面の表示後に実際のキャンバス幅を取得し、開始・終了の位置を収め直す。
+  useEffect(() => {
+    if (screen !== 'stage') return
+    const frameId = window.requestAnimationFrame(() => setNodes(initialNodes()))
+    return () => window.cancelAnimationFrame(frameId)
+  }, [screen])
+
   /** 画面上のポインター座標を、編集領域内の座標へ変換する。 */
   function canvasPoint(event: PointerEvent | ReactPointerEvent) {
     const box = canvasRef.current!.getBoundingClientRect()
-    return { x: Math.max(0, Math.min(box.width - NODE_WIDTH, event.clientX - box.left)), y: Math.max(0, Math.min(box.height - NODE_HEIGHT, event.clientY - box.top)) }
+    return { x: Math.max(0, Math.min(box.width, event.clientX - box.left)), y: Math.max(0, Math.min(box.height, event.clientY - box.top)) }
+  }
+
+  /** ポインター位置を中心にして、編集領域からはみ出さない図形の配置座標を作る。 */
+  function nodePosition(point: { x: number; y: number }) {
+    const canvas = canvasRef.current!
+    return {
+      x: Math.max(0, Math.min(canvas.clientWidth - NODE_WIDTH, point.x - NODE_WIDTH / 2)),
+      y: Math.max(0, Math.min(canvas.clientHeight - NODE_HEIGHT, point.y - NODE_HEIGHT / 2)),
+    }
   }
 
   // ドラッグ中の図形・新規図形・矢印プレビューを画面全体のポインター操作で更新する。
@@ -66,7 +111,11 @@ export default function App() {
     function onMove(event: PointerEvent) {
       if (dragging && canvasRef.current) {
         const point = canvasPoint(event)
-        setNodes((current) => current.map((node) => node.id === dragging.id ? { ...node, x: point.x - dragging.offsetX, y: point.y - dragging.offsetY } : node))
+        setNodes((current) => current.map((node) => node.id === dragging.id ? {
+          ...node,
+          x: Math.max(0, Math.min(canvasRef.current!.clientWidth - NODE_WIDTH, point.x - dragging.offsetX)),
+          y: Math.max(0, Math.min(canvasRef.current!.clientHeight - NODE_HEIGHT, point.y - dragging.offsetY)),
+        } : node))
       }
       if (newAction) setNewActionPreview({ x: event.clientX, y: event.clientY })
       if (connecting && canvasRef.current) setConnectionPreview(canvasPoint(event))
@@ -79,13 +128,23 @@ export default function App() {
         const inside = event.clientX >= box.left && event.clientX <= box.right && event.clientY >= box.top && event.clientY <= box.bottom
         if (inside) {
           const point = canvasPoint(event)
-          setNodes((current) => [...current, { id: makeId(newAction), action: newAction, x: point.x, y: point.y }])
+          const position = nodePosition(point)
+          setNodes((current) => [...current, { id: makeId(newAction), action: newAction, ...position }])
         }
       }
       if (connecting) {
         const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-input-id]')?.dataset.inputId
-        if (target && target !== connecting && !edges.some((edge) => edge.from === connecting || edge.to === target)) {
-          setEdges((current) => [...current, { id: `${connecting}-${target}`, from: connecting, to: target }])
+        const source = connecting && nodes.find((node) => node.id === connecting.id)
+        const targetNode = target ? nodes.find((node) => node.id === target) : undefined
+        const sourceHasOutput = source?.action === 'decision'
+          ? edges.some((edge) => edge.from === connecting?.id && edge.branch === connecting?.branch)
+          : edges.some((edge) => edge.from === connecting?.id)
+        const targetHasInput = targetNode?.action === 'end' ? false : edges.some((edge) => edge.to === target)
+        const matchesTutorialStep = canConnectTutorialNodes(tutorialStep, source, targetNode)
+        if (target && source && target !== connecting.id && !sourceHasOutput && !targetHasInput && matchesTutorialStep) {
+          setEdges((current) => [...current, { id: `${connecting.id}-${connecting.branch ?? 'next'}-${target}`, from: connecting.id, to: target, branch: connecting.branch }])
+        } else if (tutorialStep && !matchesTutorialStep) {
+          setRunState({ ...freshRunState(stage), message: 'いまは、ひかっている ● どうしを つないでみよう。' })
         }
       }
       setDragging(null); setNewAction(null); setNewActionPreview(null); setConnecting(null); setConnectionPreview(null)
@@ -93,24 +152,36 @@ export default function App() {
     window.addEventListener('pointermove', onMove)
     window.addEventListener('pointerup', onUp)
     return () => { window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp) }
-  }, [dragging, newAction, connecting, edges])
+  }, [dragging, newAction, connecting, edges, nodes, stage, tutorialStep])
 
   /** フローチャートを検証し、正しければ猫の行動を順に実行する。 */
   function runFlow() {
-    const result = validateFlow(nodes, edges)
+    if (tutorialStep?.type !== undefined && tutorialStep.type !== 'run') {
+      setRunState({ ...freshRunState(stage), message: 'いまは、がめんの あんないを みながら つくってみよう。' })
+      setErrorShakeKey((current) => current + 1)
+      return
+    }
+    // 箱があるステージでは、実行するたびに中身と判断の答えを決める。
+    const boxContent = Math.random() < 0.5 ? 'toy' : 'snack'
+    const runStage: StageDefinition = stage.box && stage.decision
+      ? { ...stage, box: { ...stage.box, content: boxContent }, decision: { ...stage.decision, answer: boxContent === 'toy' ? 'yes' : 'no' } }
+      : stage
+    const result = validateFlow(nodes, edges, runStage)
     if (!result.ok) {
       setInvalidIds(result.invalidIds)
       setRunState({ ...freshRunState(stage), status: 'error', message: result.message })
+      setErrorShakeKey((current) => current + 1)
       return
     }
     setInvalidIds([])
-    setRunState({ ...freshRunState(stage), status: 'running', message: 'ねこ社員が うごきだしたよ！' })
-    let state: RunState = { ...freshRunState(stage), status: 'running' }
+    setRunState({ ...freshRunState(runStage), status: 'running', message: 'ねこ社員が うごきだしたよ！' })
+    let state: RunState = { ...freshRunState(runStage), status: 'running' }
     result.order.forEach((node, index) => {
       window.setTimeout(() => {
         if (state.status === 'error' || state.status === 'success') return
-        state = applyAction(state, node.action, stage)
+        state = applyAction(state, node.action, runStage)
         setRunState(state)
+        if (state.status === 'error') setErrorShakeKey((current) => current + 1)
       }, index * 900)
     })
   }
@@ -118,6 +189,18 @@ export default function App() {
   /** 現在のステージを開始直後の状態へ戻す。 */
   function reset() {
     setNodes(initialNodes()); setEdges([]); setInvalidIds([]); setRunState(freshRunState(stage))
+  }
+
+  /** 組み立てたフローチャートを残し、同じステージをもう一度実行できる状態にする。 */
+  function playAgain() {
+    setInvalidIds([])
+    setRunState(freshRunState(stage))
+  }
+
+  /** ホーム画面へ戻る。 */
+  function goHome() {
+    setShowLegend(false)
+    setScreen('home')
   }
 
   /** 指定した図形と、その図形につながる矢印を削除する。 */
@@ -140,36 +223,42 @@ export default function App() {
     setInvalidIds([])
     setRunState(freshRunState(nextStage))
     setScreen('stage')
-    setShowLegend(true)
+    setShowLegend(!nextStage.tutorial)
   }
 
   if (screen === 'home') {
     return (
       <main className="app-shell home-screen">
-        <header className="topbar"><div className="logo"><img src="/images/company-logo.png" alt="会社ロゴ" /></div></header>
-        <section className="home-hero"><span>🐱</span><h1>ねこ社員の フローチャート</h1><p>ねこ社員の お<ruby>仕事<rt>しごと</rt></ruby>を、フローチャートで たすけよう！</p></section>
-        <section className="stage-select"><h2>ステージを えらぼう</h2><div className="stage-cards">{stages.map((availableStage, index) => <button key={availableStage.id} className="stage-card" onClick={() => openStage(availableStage)}><span className="stage-card-number">{index + 1}</span><span className="difficulty">{availableStage.difficulty}</span><strong>{availableStage.title}</strong><small>タップして はじめる</small></button>)}</div></section>
+        <header className="topbar"><div className="logo"><img src="/images/company-logo.png" alt="会社ロゴ" /></div><button className="guide-link" onClick={() => setScreen('guide')}>フローチャートとは？</button></header>
+        <section className="home-hero"><img className="home-cat-image" src={selectedCat.imagePath} alt={selectedCat.alt} />
+        <h1>ねこ社員とフローチャート</h1>
+        <p>ねこ社員と フローチャートを まなぼう！</p></section>
+        <section className="stage-select"><h2>ステージを えらぼう</h2><div className="stage-cards">{stages.map((availableStage, index) => <button key={availableStage.id} className={`stage-card ${availableStage.tutorial ? 'tutorial-card' : ''}`} onClick={() => openStage(availableStage)}>{availableStage.tutorial ? <span className="tutorial-card-icon">📖</span> : <span className="stage-card-number">{index}</span>}<span className="stage-card-content"><span className="difficulty">{availableStage.difficulty}</span><strong>{availableStage.title}</strong><small>{availableStage.tutorial ? 'はじめての ひとへ' : 'タップして はじめる'}</small></span></button>)}</div></section>
       </main>
     )
   }
 
+  if (screen === 'guide') {
+    return <FlowchartGuide catImagePath={selectedCat.imagePath} catAlt={selectedCat.alt} onBack={() => setScreen('home')} />
+  }
+
   return (
     <main className="app-shell">
-      <header className="topbar"><div className="logo"><img src="/images/company-logo.png" alt="会社ロゴ" /></div><div className="stage-title"><span className="difficulty">{stage.difficulty}</span><h1>ステージ {stages.findIndex((availableStage) => availableStage.id === stage.id) + 1}　{stage.title}</h1></div><div className="header-actions"><button className="home-button" onClick={() => setScreen('home')}>ホームに戻る</button><button className="reset-button" onClick={reset}><ruby>最初<rt>さいしょ</rt></ruby>から</button></div></header>
-      <section className="intro"><div className="cat-portrait">🐱</div><p className="stage-description">{stage.description.map((part, index) => part.ruby ? <ruby key={index}>{part.text}<rt>{part.ruby}</rt></ruby> : <span className="stage-description" key={index}>{part.text}</span>)}</p><span>ヒント：おもちゃを ひろってから、ヒト社員に とどけよう。</span></section>
+      <header className="topbar"><div className="logo"><img src="/images/company-logo.png" alt="会社ロゴ" /></div><div className="stage-title"><span className="difficulty">{stage.difficulty}</span><h1>{stage.tutorial ? stage.title : `ステージ ${stages.findIndex((availableStage) => availableStage.id === stage.id)}　${stage.title}`}</h1></div><div className="header-actions"><button className="home-button" onClick={() => setScreen('home')}>ホームに戻る</button><button className="reset-button" onClick={reset}><ruby>最初<rt>さいしょ</rt></ruby>から</button></div></header>
+      <section className="intro"><div className="cat-portrait"><img src={selectedCat.imagePath} alt={selectedCat.alt} /></div><p className="stage-description">{stage.description.map((part, index) => part.ruby ? <ruby key={index}>{part.text}<rt>{part.ruby}</rt></ruby> : <span className="stage-description" key={index}>{part.text}</span>)}</p></section><p className={stage.tutorial ? 'tutorial-guide' : 'stage-hint'}>{stage.tutorial ? tutorialMessage(tutorialStep) : `ヒント：${stage.hint}`}</p>
       <div className="game-layout">
-        <aside className="palette panel"><h2><ruby>使<rt>つか</rt></ruby>う <ruby>記号<rt>きごう</rt></ruby></h2><p>ドラッグしてね</p>{stage.availableActions.map((action) => <button key={action} className={`palette-node ${action}`} onPointerDown={(event) => { event.preventDefault(); setNewAction(action); setNewActionPreview({ x: event.clientX, y: event.clientY }) }}>{actionLabels[action]}<small><ruby>処理<rt>しょり</rt></ruby></small></button>)}</aside>
-        <section className="editor panel"><div className="editor-heading"><h2>フローチャート</h2><div className="editor-actions">{edges.length > 0 && <p className="arrow-help">やじるしを タッチすると けせるよ</p>}<button className="legend-button" onClick={() => setShowLegend(true)}><ruby>記号<rt>きごう</rt></ruby>の <ruby>説明<rt>せつめい</rt></ruby></button><button className="run-button" onClick={runFlow} disabled={runState.status === 'running'}>▶ うごかす</button></div></div><div ref={canvasRef} className="canvas">
-          <svg className="edge-layer" aria-label="やじるしを さわると けせます">{edges.map((edge) => { const from = nodes.find((node) => node.id === edge.from); const to = nodes.find((node) => node.id === edge.to); if (!from || !to) return null; const x1 = from.x + NODE_WIDTH / 2; const y1 = from.y + NODE_HEIGHT; const x2 = to.x + NODE_WIDTH / 2; const y2 = to.y; return <g key={edge.id}><line className="edge-hit-area" x1={x1} y1={y1} x2={x2} y2={y2} onPointerDown={(event) => { event.stopPropagation(); deleteEdge(edge.id) }} /><line className="edge-visible" x1={x1} y1={y1} x2={x2} y2={y2} markerEnd="url(#arrow)" /></g> })}{connecting && connectionPreview && (() => { const from = nodes.find((node) => node.id === connecting); return from && <line className="edge-preview" x1={from.x + NODE_WIDTH / 2} y1={from.y + NODE_HEIGHT} x2={connectionPreview.x} y2={connectionPreview.y} markerEnd="url(#arrow-preview)" /> })()}<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" /></marker><marker id="arrow-preview" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" /></marker></defs></svg>
-          {nodes.map((node) => <div key={node.id} className={`flow-node ${node.action} ${invalidIds.includes(node.id) ? 'invalid' : ''}`} style={{ left: node.x, top: node.y }} onPointerDown={(event) => { if ((event.target as HTMLElement).classList.contains('connector') || (event.target as HTMLElement).classList.contains('delete-node')) return; event.preventDefault(); setDragging({ id: node.id, offsetX: event.nativeEvent.offsetX, offsetY: event.nativeEvent.offsetY }) }}>{node.action !== 'start' && node.action !== 'end' && <button className="delete-node" aria-label={`${actionLabels[node.action]}を けす`} onPointerDown={(event) => { event.stopPropagation(); deleteNode(node.id) }} />}{node.action !== 'start' && <span className="connector input" data-input-id={node.id} title="ここへつなぐ" />}{actionLabels[node.action]}{node.action !== 'end' && <span className="connector output" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting(node.id); setConnectionPreview(canvasPoint(event)) }} title="ここからつなぐ" />}</div>)}
+        <aside className="palette panel"><h2><ruby>使<rt>つか</rt></ruby>う <ruby>記号<rt>きごう</rt></ruby></h2><p>ドラッグしてね</p>{stage.availableActions.map((action) => <button key={action} className={`palette-node ${action} ${tutorialStep?.type === 'place' && tutorialStep.action === action ? 'tutorial-target' : ''}`} onPointerDown={(event) => startNewAction(event, action)}>{labelFor(action)}<small>{action === 'decision' ? <><ruby>判断<rt>はんだん</rt></ruby></> : <><ruby>処理<rt>しょり</rt></ruby></>}</small></button>)}</aside>
+        <section className={`editor panel ${tutorialStep?.type === 'place' ? 'tutorial-drop-target' : ''}`}><div className="editor-heading"><h2>フローチャート</h2><div className="editor-actions">{edges.length > 0 && <p className="arrow-help">やじるしを タッチすると けせるよ</p>}<button className="legend-button" onClick={() => setShowLegend(true)}><ruby>記号<rt>きごう</rt></ruby>の <ruby>説明<rt>せつめい</rt></ruby></button><button className={`run-button ${tutorialStep?.type === 'run' ? 'tutorial-target' : ''}`} onClick={runFlow} disabled={runState.status === 'running'}>▶ うごかす</button></div></div><div ref={canvasRef} className="canvas">
+          <svg className="edge-layer" aria-label="やじるしを さわると けせます">{edges.map((edge) => { const from = nodes.find((node) => node.id === edge.from); const to = nodes.find((node) => node.id === edge.to); if (!from || !to) return null; const connector = edge.branch === 'yes' ? DECISION_YES_CONNECTOR : DECISION_NO_CONNECTOR; const x1 = from.x + (from.action === 'decision' ? connector.x : NODE_WIDTH / 2); const y1 = from.y + (from.action === 'decision' ? connector.y : NODE_HEIGHT); const x2 = to.x + NODE_WIDTH / 2; const y2 = to.y; return <g key={edge.id}><line className="edge-hit-area" x1={x1} y1={y1} x2={x2} y2={y2} onPointerDown={(event) => { event.stopPropagation(); deleteEdge(edge.id) }} /><line className="edge-visible" x1={x1} y1={y1} x2={x2} y2={y2} markerEnd="url(#arrow)" /></g> })}{connecting && connectionPreview && (() => { const from = nodes.find((node) => node.id === connecting.id); const connector = connecting.branch === 'yes' ? DECISION_YES_CONNECTOR : DECISION_NO_CONNECTOR; const x1 = from ? from.x + (from.action === 'decision' ? connector.x : NODE_WIDTH / 2) : 0; const y1 = from ? from.y + (from.action === 'decision' ? connector.y : NODE_HEIGHT) : 0; return from && <line className="edge-preview" x1={x1} y1={y1} x2={connectionPreview.x} y2={connectionPreview.y} markerEnd="url(#arrow-preview)" /> })()}<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" /></marker><marker id="arrow-preview" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" /></marker></defs></svg>
+          {nodes.map((node) => <div key={node.id} className={`flow-node ${node.action} ${invalidIds.includes(node.id) ? 'invalid' : ''} ${isTutorialConnectionTarget(tutorialStep, node.action) ? 'tutorial-target' : ''}`} style={{ left: node.x, top: node.y }} onPointerDown={(event) => { if ((event.target as HTMLElement).classList.contains('connector') || (event.target as HTMLElement).classList.contains('delete-node')) return; event.preventDefault(); setDragging({ id: node.id, offsetX: event.nativeEvent.offsetX, offsetY: event.nativeEvent.offsetY }) }}>{node.action !== 'start' && node.action !== 'end' && <button className="delete-node" aria-label={`${labelFor(node.action)}を けす`} onPointerDown={(event) => { event.stopPropagation(); deleteNode(node.id) }} />}{node.action !== 'start' && <span className="connector input" data-input-id={node.id} title="ここへつなぐ" />}<span className="node-label">{labelFor(node.action)}</span>{node.action === 'decision' ? <><span className="connector output decision-output yes" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id, branch: 'yes' }); setConnectionPreview(canvasPoint(event)) }} title="はいをつなぐ" /><span className="connector output decision-output no" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id, branch: 'no' }); setConnectionPreview(canvasPoint(event)) }} title="いいえをつなぐ" /></> : node.action !== 'end' && <span className="connector output" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id }); setConnectionPreview(canvasPoint(event)) }} title="ここからつなぐ" />}</div>)}
           {connecting && <div className="connection-hint">つなぎたい きごうの ● まで ドラッグ！</div>}
           {nodes.every((node) => node.action === 'start' || node.action === 'end') && <div className="empty-canvas">左の きごうを、ここに ドラッグしてね。</div>}
         </div></section>
-        <section className="board panel"><h2>ねこ社員のお<ruby>仕事<rt>しごと</rt></ruby></h2><div className="grid" style={{ gridTemplateColumns: `repeat(${stage.grid.columns}, 1fr)` }}>{Array.from({ length: stage.grid.columns }, (_, x) => { const y = stage.start.y; const catHere = runState.cat.x === x && runState.cat.y === y; const toyHere = stage.toy.x === x && stage.toy.y === y && !runState.hasToy; const targetHere = stage.delivery.x === x && stage.delivery.y === y; return <div key={x} className={`cell ${catHere && toyHere ? 'cat-with-toy' : ''}`}>{targetHere && <span className="target">🧑‍💼</span>}{toyHere && <span className="toy">🧸</span>}{catHere && <span className={`cat ${runState.status === 'success' ? 'happy' : runState.status === 'error' ? 'confused' : ''}`}>🐱</span>}</div> })}</div><div className={`speech ${runState.status}`}><span>🐱</span><p>{runState.message}</p></div></section>
+        <section className="board panel"><h2>ねこ社員のお<ruby>仕事<rt>しごと</rt></ruby></h2><div className="grid" style={{ gridTemplateColumns: `repeat(${stage.grid.columns}, 1fr)` }}>{Array.from({ length: stage.grid.columns }, (_, x) => { const y = stage.start.y; const catHere = runState.cat.x === x && runState.cat.y === y; const toyHere = stage.toy.x === x && stage.toy.y === y && !runState.hasToy; const snackHere = stage.snack?.x === x && stage.snack?.y === y && !runState.snackCollected; const boxHere = stage.box?.x === x && stage.box?.y === y; const targetHere = stage.delivery.x === x && stage.delivery.y === y; return <div key={x} className={`cell ${catHere && (toyHere || snackHere) ? 'cat-with-toy' : ''}`}>{targetHere && <span className="target">🧑‍💼</span>}{toyHere && <span className="toy">🧸</span>}{snackHere && <span className="toy">🐟</span>}{boxHere && <span className="box">{runState.boxOpened ? '' : '📦'}</span>}{boxHere && runState.boxOpened && <span className="box-content">{runState.boxContent === 'toy' ? '🧸' : '🐟'}</span>}{catHere && <img key={`cat-${errorShakeKey}`} className={`cat ${runState.status === 'success' ? 'happy' : runState.status === 'error' ? 'confused' : ''}`} src={selectedCat.imagePath} alt={selectedCat.alt} />}</div> })}</div><div className={`speech ${runState.status}`}><img className="speech-cat" src={selectedCat.imagePath} alt="" /><p>{runState.message}</p></div></section>
       </div>
-      {newAction && newActionPreview && <div className={`flow-node drag-preview ${newAction}`} style={{ left: newActionPreview.x, top: newActionPreview.y }}>{actionLabels[newAction]}</div>}
-      {showLegend && <div className="legend-overlay" role="dialog" aria-modal="true" aria-labelledby="legend-title"><div className="legend-modal"><button className="legend-close" aria-label="説明をとじる" onClick={() => setShowLegend(false)} /><h2 id="legend-title"><ruby>記号<rt>きごう</rt></ruby>の <ruby>説明<rt>せつめい</rt></ruby></h2><p>フローチャートは、きごうと やじるしで <ruby>手順<rt>てじゅん</rt></ruby>を あらわすよ。</p><div className="legend-items"><div><span className="legend-symbol terminal">はじめ／おわり</span><p><ruby>端子<rt>たんし</rt></ruby>：ながれの はじまりと おわり。</p></div><div><span className="legend-symbol process"><ruby>処理<rt>しょり</rt></ruby></span><p><ruby>処理<rt>しょり</rt></ruby>：ねこ社員に してほしいこと。</p></div><div><span className="legend-arrow">→</span><p>やじるし：つぎに すすむ みち。</p></div></div><button className="legend-ok" onClick={() => setShowLegend(false)}>わかった！</button></div></div>}
-      {runState.status === 'success' && <div className="success-overlay"><div><span>🎉</span><h2>クリア！ おめでとう！</h2><p>ねこ社員が おもちゃを とどけられたよ。</p><button onClick={reset}>もういちど あそぶ</button></div></div>}
+      {newAction && newActionPreview && <div className={`flow-node drag-preview ${newAction}`} style={{ left: newActionPreview.x, top: newActionPreview.y }}>{labelFor(newAction)}</div>}
+      {showLegend && <div className="legend-overlay" role="dialog" aria-modal="true" aria-labelledby="legend-title"><div className="legend-modal"><button className="legend-close" aria-label="説明をとじる" onClick={() => setShowLegend(false)} /><h2 id="legend-title"><ruby>記号<rt>きごう</rt></ruby>の <ruby>説明<rt>せつめい</rt></ruby></h2><p>フローチャートは、きごうと やじるしで <ruby>手順<rt>てじゅん</rt></ruby>を あらわすよ。</p><div className="legend-items"><div><span className="legend-symbol terminal">はじめ／おわり</span><p><ruby>端子<rt>たんし</rt></ruby>：ながれの はじまりと おわり。</p></div><div><span className="legend-symbol process"><ruby>処理<rt>しょり</rt></ruby></span><p><ruby>処理<rt>しょり</rt></ruby>：ねこ社員に してほしいこと。</p></div><div><span className="legend-symbol decision">◇</span><p><ruby>判断<rt>はんだん</rt></ruby>：「はい」と「いいえ」の みちを えらぶよ。</p></div><div><span className="legend-arrow">→</span><p>やじるし：つぎに すすむ みち。</p></div></div><button className="legend-ok" onClick={() => setShowLegend(false)}>わかった！</button></div></div>}
+      {runState.status === 'success' && <div className="success-overlay"><div><span>🎉</span><h2>クリア！ おめでとう！</h2><div className="success-actions"><button className="success-home" onClick={goHome}>ホーム<ruby>画面<rt>がめん</rt></ruby>へ</button><button className="success-again" onClick={playAgain}>もういちど あそぶ</button></div></div></div>}
     </main>
   )
 }

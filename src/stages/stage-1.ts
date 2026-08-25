@@ -5,18 +5,9 @@ export const stage1: StageDefinition = {
   title: 'おもちゃを とどけよう',
   difficulty: 'かんたん',
   description: [
-    { text: 'ねこ' },
+    { text: '「おもちゃ🧸を ひろって 「ヒト'},
     { text: '社員', ruby: 'しゃいん' },
-    { text: 'に、おもちゃ🧸をひろって ' },
-    { text: 'ヒト' },
-    { text: '社員', ruby: 'しゃいん' },
-    { text: '🧑‍💼に ' },
-    { text: '届', ruby: 'とど' },
-    { text: 'ける ' },
-    { text: '手順', ruby: 'てじゅん' },
-    { text: 'を ' },
-    { text: '教', ruby: 'おし' },
-    { text: 'えてあげよう。' },
+    { text: '🧑‍💼」に とどける てじゅんを おしえてね' },
   ],
   // 開始・終了は編集領域に固定で用意する。ここには何度でも追加できる処理だけを置く。
   availableActions: ['move', 'pickUp', 'deliver'],
@@ -24,4 +15,5 @@ export const stage1: StageDefinition = {
   toy: { x: 1, y: 1 },
   delivery: { x: 3, y: 1 },
   grid: { columns: 4, rows: 3 },
+  hint: 'おもちゃを ひろってから、ヒト社員に とどけよう。',
 }

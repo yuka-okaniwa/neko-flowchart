@@ -13,7 +13,7 @@
 }
 body {
   margin: 0;
-  min-width: 920px;
+  min-width: 0;
 }
 button {
   font: inherit;
@@ -27,11 +27,12 @@ button {
     #fff8fb;
 }
 .topbar {
-  height: 70px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 20px;
+  min-height: 70px;
 }
 .logo {
   display: flex;
@@ -52,11 +53,13 @@ button {
 .stage-title {
   display: flex;
   align-items: center;
+  min-width: 0;
   gap: 12px;
 }
 .stage-title h1 {
   margin: 0;
   font-size: clamp(20px, 2.2vw, 31px);
+  overflow-wrap: anywhere;
 }
 .difficulty {
   color: #815166;
@@ -89,6 +92,7 @@ button {
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -113,6 +117,7 @@ button {
 .intro {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   max-width: 980px;
   margin: 4px auto 18px;
@@ -121,24 +126,58 @@ button {
   border: 2px solid #efd9e2;
   border-radius: 22px;
 }
+.stage-hint {
+  width: min(980px, 92vw);
+  margin: -4px auto 18px;
+  padding: 0 18px;
+  color: #8b7080;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: right;
+}
+.tutorial-guide {
+  width: min(980px, 92vw);
+  margin: -4px auto 18px;
+  padding: 12px 18px;
+  color: #644653;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1.55;
+  background: #fff0b8;
+  border: 2px solid #efca57;
+  border-radius: 14px;
+  box-shadow: 0 3px 0 rgba(196, 145, 40, 0.16);
+}
 .intro p {
+  flex: 1 1 320px;
   margin: 0;
   color: #8b7080;
   font-weight: 700;
   font-size: 16px;
+  overflow-wrap: anywhere;
 }
 .intro span {
+  flex: 1 1 260px;
   margin-left: auto;
   color: #8b7080;
   font-weight: 700;
   font-size: 16px;
 }
 .cat-portrait {
-  font-size: 38px;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+}
+
+.cat-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 .game-layout {
   display: grid;
-  grid-template-columns: 190px minmax(380px, 1.25fr) minmax(265px, 0.75fr);
+  grid-template-columns: minmax(150px, 190px) minmax(0, 1.25fr) minmax(220px, 0.75fr);
   gap: 16px;
   max-width: 1500px;
   margin: auto;
@@ -159,7 +198,7 @@ button {
 .palette p {
   margin: 4px 0 16px;
   color: #927986;
-  font-size: 12px;
+  font-size: 16px;
 }
 .palette-node {
   position: relative;
@@ -173,6 +212,7 @@ button {
   border: 2px solid #d99aac;
   border-radius: 9px;
   font-weight: 900;
+  white-space: pre-line;
   touch-action: none;
 }
 .palette-node.start,
@@ -183,13 +223,41 @@ button {
 }
 .palette-node small {
   display: block;
-  font-size: 10px;
-  font-weight: 500;
-  color: #8b707e;
+  font-size: 12px;
+  font-weight: 800;
+  color: #313031;
+}
+.palette-node.decision {
+  display: grid;
+  width: 150px;
+  min-height: 120px;
+  margin: 18px auto;
+  padding: 24px 30px;
+  border: 0;
+  border-radius: 0;
+  background: #f4d7e1;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  place-items: center;
 }
 .palette-node:disabled {
   opacity: 0.36;
   cursor: not-allowed;
+}
+.tutorial-target {
+  animation: tutorial-pulse 1s ease-in-out infinite alternate;
+}
+.palette-node.tutorial-target,
+.run-button.tutorial-target {
+  outline: 4px solid #f0c64e;
+  outline-offset: 3px;
+}
+.flow-node.tutorial-target {
+  box-shadow: 0 0 0 5px #f0c64e;
+}
+.editor.tutorial-drop-target {
+  border-color: #efca57;
+  box-shadow: 0 0 0 4px #fff0a6, 0 0 18px rgba(239, 202, 87, 0.8);
+  animation: tutorial-frame-blink 1.6s steps(2, end) infinite;
 }
 .editor {
   overflow: hidden;
@@ -198,19 +266,22 @@ button {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 66px;
+  flex-wrap: wrap;
+  min-height: 66px;
   padding: 0 18px;
   border-bottom: 2px dashed #eddde3;
 }
 .editor-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 14px;
 }
 .arrow-help {
   margin: 0;
   color: #8b7080;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -269,6 +340,7 @@ button {
   color: #563f4b;
   font-weight: 900;
   text-align: center;
+  white-space: pre-line;
   user-select: none;
   touch-action: none;
 }
@@ -277,6 +349,32 @@ button {
   border-color: #d99bab;
   border-radius: 40px;
   background: #ffffff;
+}
+.flow-node.decision {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.flow-node.decision::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: '';
+  background: #f4d7e1;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.flow-node.decision.invalid {
+  box-shadow: 0 0 0 5px #e85252;
+}
+.flow-node.decision.invalid::before {
+  background: #ffd4d4;
+}
+.flow-node.decision.invalid .connector::before {
+  background: #e85252;
+}
+.node-label {
+  position: relative;
+  z-index: 1;
 }
 .flow-node.invalid {
   border-color: #e85252;
@@ -334,6 +432,46 @@ button {
 .connector.output {
   bottom: -22px;
 }
+.connector.decision-output {
+  bottom: -42px;
+  color: #765766;
+  font-size: 16px;
+  font-weight: 900;
+  text-align: center;
+}
+.connector.decision-output::before {
+  top: 2px;
+}
+.connector.decision-output.yes {
+  left: calc(50% - 22px);
+}
+.connector.decision-output.no {
+  top: calc(50% - 19px);
+  bottom: auto;
+  left: calc(100% - 12px);
+}
+.connector.decision-output.yes::before {
+  background: #f16672;
+}
+.connector.decision-output.no::before {
+  background: #666ff1;
+}
+.connector.decision-output.yes::after{
+  color: #f16672;
+  position: absolute;
+  top: 27px;
+  left: 0;
+  width: 44px;
+  content: 'はい';
+}
+.connector.decision-output.no::after {
+  color: #666ff1;
+  position: absolute;
+  top: 11px;
+  left: 34px;
+  width: max-content;
+  content: 'いいえ';
+}
 .connector::before {
   position: absolute;
   top: 12px;
@@ -388,6 +526,9 @@ button {
   top: 50%;
   left: 50%;
   z-index: 2;
+  width: min(78%, 64px);
+  height: min(78%, 64px);
+  object-fit: contain;
   transform: translate(-50%, -50%);
   transition: transform 0.35s ease;
 }
@@ -412,6 +553,19 @@ button {
   z-index: 1;
   transform: translate(-50%, -50%);
 }
+.box,
+.box-content {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+.box-content {
+  z-index: 2;
+  top: 30%;
+  font-size: 0.72em;
+}
 .cat-with-toy .toy {
   top: 30%;
 }
@@ -432,6 +586,13 @@ button {
   font-size: 14px;
   font-weight: 700;
   line-height: 1.7;
+}
+
+.speech-cat {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 .speech.error {
   background: #fff0ef;
@@ -464,9 +625,28 @@ button {
   margin: 8px 0;
   font-size: 30px;
 }
+.success-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 22px;
+}
 .success-overlay button {
+  width: 100%;
+}
+.success-home {
   color: white;
-  background: #d87a98;
+  font-size: 21px;
+  background: #8fce6b;
+  box-shadow: 0 5px 0 #6da54d;
+}
+.success-home:hover,
+.success-home:focus-visible {
+  background: #7dc35a;
+}
+.success-again {
+  color: #765766;
+  background: #fff;
+  border: 2px solid #ddb3c1 !important;
 }
 
 /* Stage selection home */
@@ -481,9 +661,12 @@ button {
   text-align: center;
 }
 
-.home-hero > span {
+.home-cat-image {
   display: block;
-  font-size: 72px;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto;
+  object-fit: contain;
 }
 
 .home-hero h1 {
@@ -508,6 +691,229 @@ button {
   font-size: 24px;
 }
 
+.guide-link {
+  padding: 9px 14px;
+  color: #7c5364;
+  font-weight: 900;
+  background: #fff;
+  border: 2px solid #e5b6c5;
+  border-radius: 12px;
+}
+
+.guide-link:hover,
+.guide-link:focus-visible {
+  background: #fff0f4;
+  border-color: #d87a98;
+}
+
+/* Flowchart guide */
+.guide-content {
+  width: min(900px, 94vw);
+  margin: 44px auto;
+}
+
+.guide-hero,
+.guide-section,
+.guide-tip {
+  margin-bottom: 24px;
+  padding: clamp(20px, 4vw, 38px);
+  background: #fff;
+  border: 2px solid #eddbe2;
+  border-radius: 24px;
+  box-shadow: 0 6px 0 rgba(166, 91, 120, 0.12);
+}
+
+.guide-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: #fffafd;
+}
+
+.guide-hero img {
+  width: min(22vw, 130px);
+  height: min(22vw, 130px);
+  object-fit: contain;
+}
+
+.guide-kicker {
+  display: inline-block;
+  margin: 0;
+  padding: 5px 12px;
+  color: #815166;
+  font-weight: 900;
+  background: #f7dce6;
+  border-radius: 99px;
+}
+
+.guide-hero h1,
+.guide-section h2,
+.guide-tip h2 {
+  margin: 8px 0 12px;
+}
+
+.guide-hero h1 {
+  font-size: clamp(30px, 5vw, 46px);
+}
+
+.guide-hero p,
+.guide-section > p,
+.guide-tip p {
+  margin: 0;
+  color: #705664;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.8;
+}
+
+.guide-example {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 15px 18px;
+  background: #fff0f4;
+  border-radius: 16px;
+}
+
+.guide-example > span {
+  font-size: 44px;
+}
+
+.guide-example p {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.8;
+}
+
+.guide-symbols {
+  display: grid;
+  gap: 14px;
+}
+
+.guide-symbol-card {
+  display: grid;
+  grid-template-columns: 170px 1fr;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  background: #fff5f7;
+  border-radius: 16px;
+}
+
+.guide-symbol {
+  display: grid;
+  width: 150px;
+  min-height: 62px;
+  margin: auto;
+  padding: 10px;
+  font-weight: 900;
+  text-align: center;
+  background: #faedf2;
+  border: 3px solid #d38ca2;
+  place-items: center;
+}
+
+.guide-symbol.terminal,
+.guide-flow-node.terminal {
+  border-radius: 99px;
+}
+
+.guide-symbol.process,
+.guide-flow-node.process {
+  border-radius: 9px;
+}
+
+.guide-symbol.decision,
+.guide-flow-node.decision {
+  border: 0;
+  background: #f4d7e1;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.guide-symbol.decision {
+  min-height: 96px;
+  font-size: 38px;
+}
+
+.guide-symbol-card h3,
+.guide-symbol-card p {
+  margin: 0;
+}
+
+.guide-symbol-card h3 {
+  margin-bottom: 4px;
+  font-size: 19px;
+}
+
+.guide-symbol-card p {
+  color: #705664;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.guide-flow {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 20px;
+  background: #fffdfd;
+  border-radius: 18px;
+}
+
+.guide-flow-node {
+  display: grid;
+  width: 170px;
+  min-height: 54px;
+  padding: 8px 14px;
+  font-weight: 900;
+  text-align: center;
+  background: #faedf2;
+  border: 3px solid #d38ca2;
+  place-items: center;
+}
+
+.guide-flow-node.decision {
+  min-height: 110px;
+  padding: 24px;
+}
+
+.guide-arrow {
+  color: #76ae58;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.guide-branches {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  width: min(100%, 430px);
+}
+
+.guide-branches > div {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.branch-label {
+  padding: 3px 10px;
+  color: white;
+  font-weight: 900;
+  border-radius: 99px;
+}
+
+.branch-label.yes { background: #f16672; }
+.branch-label.no { background: #666ff1; }
+
+.guide-tip {
+  background: #fff0b8;
+  border-color: #efca57;
+}
+
 .stage-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -515,9 +921,9 @@ button {
 }
 
 .stage-card {
-  position: relative;
-  display: grid;
-  gap: 10px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
   min-height: 185px;
   padding: 24px;
   color: #503d48;
@@ -535,6 +941,7 @@ button {
 }
 
 .stage-card-number {
+  flex: 0 0 auto;
   display: grid;
   width: 42px;
   height: 42px;
@@ -544,6 +951,42 @@ button {
   background: #d87a98;
   border-radius: 50%;
   place-items: center;
+}
+
+.stage-card-content {
+  display: grid;
+  gap: 10px;
+}
+.tutorial-card {
+  border-color: #efca57;
+  background: #fffaf0;
+}
+.tutorial-card:hover,
+.tutorial-card:focus-visible {
+  border-color: #d9aa27;
+}
+.tutorial-card-icon {
+  display: grid;
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  font-size: 28px;
+  background: #ffe899;
+  border-radius: 50%;
+  place-items: center;
+}
+
+@keyframes tutorial-pulse {
+  to {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes tutorial-frame-blink {
+  50% {
+    border-color: #eddbe2;
+    box-shadow: 0 6px 0 rgba(166, 91, 120, 0.12);
+  }
 }
 
 .stage-card .difficulty {
@@ -659,6 +1102,10 @@ button {
 .legend-symbol.process {
   border-radius: 8px;
 }
+.legend-symbol.decision {
+  color: #b96f88;
+  font-size: 34px;
+}
 
 .legend-arrow {
   color: #76ae58;
@@ -701,11 +1148,97 @@ button {
     padding: 12px;
   }
   .game-layout {
-    grid-template-columns: 170px minmax(360px, 1fr) 245px;
+    grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
     gap: 10px;
   }
-  .intro span {
-    display: none;
+  .board {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 700px) {
+  .app-shell {
+    padding: 10px;
+  }
+
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .logo {
+    width: 140px;
+    height: 48px;
+  }
+
+  .stage-title {
+    flex: 1 1 100%;
+    order: 3;
+  }
+
+  .header-actions {
+    margin-left: auto;
+  }
+
+  .intro {
+    align-items: flex-start;
+  }
+
+  .game-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .palette,
+  .editor,
+  .board {
+    grid-column: auto;
+  }
+
+  .canvas {
+    min-height: 460px;
+  }
+
+  .guide-content {
+    margin: 24px auto;
+  }
+
+  .guide-hero {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .guide-hero img {
+    width: 86px;
+    height: 86px;
+  }
+
+  .guide-symbol-card {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-symbol {
+    margin-left: 0;
+  }
+
+  .guide-branches {
+    gap: 10px;
+  }
+
+  .guide-flow-node {
+    width: 136px;
+    font-size: 14px;
+  }
+
+  .editor-heading {
+    height: auto;
+    padding: 12px 18px;
+  }
+
+  .editor-actions {
+    justify-content: flex-start;
+  }
+
+  .legend-items > div {
+    grid-template-columns: 1fr;
   }
 }
 .stage-description{
