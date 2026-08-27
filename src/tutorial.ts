@@ -17,7 +17,7 @@ export function getCurrentTutorialStep(
       return !edges.some((edge) => {
         const from = nodes.find((node) => node.id === edge.from)
         const to = nodes.find((node) => node.id === edge.to)
-        return from?.action === step.from && to?.action === step.to
+        return from?.action === step.from && to?.action === step.to && edge.branch === step.branch
       })
     }
 
@@ -35,8 +35,9 @@ export function canConnectTutorialNodes(
   step: TutorialStep | undefined,
   from: FlowNode | undefined,
   to: FlowNode | undefined,
+  branch?: 'yes' | 'no',
 ) {
-  return !step || (step.type === 'connect' && from?.action === step.from && to?.action === step.to)
+  return !step || (step.type === 'connect' && from?.action === step.from && to?.action === step.to && branch === step.branch)
 }
 
 /** 指定した記号を、現在のチュートリアルで強調するかを判定する。 */

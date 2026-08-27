@@ -4,7 +4,7 @@ export const tutorial: StageDefinition = {
   id: 'how-to-play',
   title: 'あそびかた',
   difficulty: 'あそびかた',
-  description: [{ text: 'ねこ社員に、おやつを ひろって たべる ' }, { text: '手順', ruby: 'てじゅん' }, { text: 'を おしえてね。' }],
+  description: [{ text: 'ねこ' }, { text: '社員', ruby: 'しゃいん' }, { text: 'に、おやつを ひろって たべる ' }, { text: '手順', ruby: 'てじゅん' }, { text: 'を おしえてね。' }],
   availableActions: ['move', 'pickUpSnack', 'eat'],
   start: { x: 0, y: 1 },
   toy: { x: -1, y: -1 },

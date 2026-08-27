@@ -239,6 +239,25 @@ button {
   clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
   place-items: center;
 }
+.palette-node.loopStart,
+.palette-node.loopEnd {
+  border: 0;
+  border-radius: 0;
+  z-index: 0;
+  background: transparent;
+}
+.palette-node.loopStart::before,
+.palette-node.loopEnd::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: '';
+  background: #e8ddf4;
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%, 0 24%);
+}
+.palette-node.loopEnd::before {
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 88% 100%, 0 100%);
+}
 .palette-node:disabled {
   opacity: 0.36;
   cursor: not-allowed;
@@ -250,9 +269,16 @@ button {
 .run-button.tutorial-target {
   outline: 4px solid #f0c64e;
   outline-offset: 3px;
+  box-shadow: 0 0 0 5px #fff3a8, 0 0 22px rgba(240, 198, 78, 0.95);
+  animation: tutorial-target-pulse 1.1s ease-in-out infinite;
+}
+.palette-node.loopStart.tutorial-target,
+.palette-node.loopEnd.tutorial-target {
+  border: 4px solid #f0c64e;
 }
 .flow-node.tutorial-target {
-  box-shadow: 0 0 0 5px #f0c64e;
+  box-shadow: 0 0 0 5px #fff3a8, 0 0 22px rgba(240, 198, 78, 0.95);
+  animation: tutorial-target-pulse 1.1s ease-in-out infinite;
 }
 .editor.tutorial-drop-target {
   border-color: #efca57;
@@ -331,7 +357,7 @@ button {
   z-index: 2;
   display: grid;
   place-items: center;
-  width: 152px;
+  width: 176px;
   height: 70px;
   padding: 9px 20px;
   border: 3px solid #d38ca2;
@@ -371,6 +397,33 @@ button {
 }
 .flow-node.decision.invalid .connector::before {
   background: #e85252;
+}
+.flow-node.loopStart,
+.flow-node.loopEnd {
+  border: 0;
+  border-radius: 0;
+  padding: 10px 16px;
+  color: #513e63;
+  font-size: 18px;
+  line-height: 1.35;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.72);
+  background: transparent;
+  filter: drop-shadow(0 3px 0 rgba(117, 89, 142, 0.22));
+}
+.flow-node.loopEnd {
+  filter: drop-shadow(0 3px 0 rgba(117, 89, 142, 0.22));
+}
+.flow-node.loopStart::before,
+.flow-node.loopEnd::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: '';
+  background: #e8ddf4;
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%, 0 24%);
+}
+.flow-node.loopEnd::before {
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 88% 100%, 0 100%);
 }
 .node-label {
   position: relative;
@@ -572,6 +625,7 @@ button {
 .cat-with-toy .cat {
   top: 70%;
 }
+
 .speech {
   display: flex;
   align-items: flex-start;
@@ -657,7 +711,7 @@ button {
 
 .home-hero {
   max-width: 800px;
-  margin: 72px auto 38px;
+  margin: 30px auto 38px;
   text-align: center;
 }
 
@@ -679,6 +733,59 @@ button {
   color: #765766;
   font-size: 20px;
   font-weight: 700;
+}
+
+.cat-introductions {
+  width: min(720px, 92vw);
+  margin: 0 auto 38px;
+  padding: 22px;
+  background: #fff;
+  border: 2px solid #eddbe2;
+  border-radius: 24px;
+  box-shadow: 0 6px 0 rgba(166, 91, 120, 0.12);
+}
+
+.cat-introductions > h2 {
+  margin: 0 0 16px;
+  font-size: 22px;
+  text-align: center;
+}
+
+.cat-introductions > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.cat-introduction-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  background: #fff1f5;
+  border-radius: 18px;
+}
+
+.cat-introduction-card img {
+  width: 76px;
+  height: 76px;
+  object-fit: contain;
+}
+
+.cat-introduction-card h3,
+.cat-introduction-card p {
+  margin: 0;
+}
+
+.cat-introduction-card h3 {
+  font-size: 20px;
+}
+
+.cat-introduction-card p {
+  color: #765766;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
 }
 
 .stage-select {
@@ -982,6 +1089,19 @@ button {
   }
 }
 
+@keyframes tutorial-target-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px #fff3a8, 0 0 12px rgba(240, 198, 78, 0.7);
+  }
+  50% {
+    transform: scale(1.09);
+    box-shadow: 0 0 0 8px #fff3a8, 0 0 30px rgba(240, 198, 78, 1);
+  }
+}
+
+
 @keyframes tutorial-frame-blink {
   50% {
     border-color: #eddbe2;
@@ -1106,6 +1226,40 @@ button {
   color: #b96f88;
   font-size: 34px;
 }
+.legend-symbol.loop-symbol,
+.guide-symbol.loop-symbol {
+  background: #e8ddf4;
+  border: 0;
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%, 0 24%);
+}
+
+.legend-loop-symbols,
+.guide-loop-symbols {
+  display: grid;
+  gap: 5px;
+}
+
+.legend-loop-symbol,
+.guide-loop-symbol {
+  display: grid;
+  min-height: 30px;
+  padding: 4px 8px;
+  color: #513e63;
+  font-size: 12px;
+  font-weight: 900;
+  background: #e8ddf4;
+  place-items: center;
+}
+
+.legend-loop-symbol.loop-start,
+.guide-loop-symbol.loop-start {
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%, 0 24%);
+}
+
+.legend-loop-symbol.loop-end,
+.guide-loop-symbol.loop-end {
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 88% 100%, 0 100%);
+}
 
 .legend-arrow {
   color: #76ae58;
@@ -1143,6 +1297,7 @@ button {
     transform: translate(calc(-50% + 8px), -50%) rotate(8deg);
   }
 }
+
 @media (max-width: 1050px) {
   .app-shell {
     padding: 12px;
@@ -1199,6 +1354,10 @@ button {
 
   .guide-content {
     margin: 24px auto;
+  }
+
+  .cat-introductions > div {
+    grid-template-columns: 1fr;
   }
 
   .guide-hero {

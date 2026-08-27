@@ -3,9 +3,18 @@ import type { FlowEdge, FlowNode, RunState, StageDefinition } from './types'
 export type ValidationResult = { ok: true; order: FlowNode[] } | { ok: false; invalidIds: string[]; message: string }
 
 /** 判断図形では、選んだ答えに対応する矢印をたどる。 */
-function nextEdge(node: FlowNode, edges: FlowEdge[], stage: StageDefinition) {
+function nextEdge(node: FlowNode, edges: FlowEdge[], stage: StageDefinition, state?: RunState) {
   const candidates = edges.filter((edge) => edge.from === node.id)
   return node.action === 'decision' ? candidates.find((edge) => edge.branch === stage.decision?.answer) : candidates[0]
+}
+
+/** 実行中の状態に合わせて、次に進む図形を取得する。 */
+export function nextFlowNode(node: FlowNode, nodes: FlowNode[], edges: FlowEdge[], stage: StageDefinition, state: RunState) {
+  if (node.action === 'loopEnd' && stage.loop && state.loopCount < stage.loop.repeatUntil) {
+    return nodes.find((candidate) => candidate.action === 'loopStart')
+  }
+  const edge = nextEdge(node, edges, stage, state)
+  return edge ? nodes.find((candidate) => candidate.id === edge.to) : undefined
 }
 
 /** すべての分かれ道が、途中で止まらず終了図形へ届くか確認する。 */
@@ -39,6 +48,21 @@ export function validateFlow(nodes: FlowNode[], edges: FlowEdge[], stage: StageD
     return inputs !== 1 || outputs.length !== 1
   }).map((node) => node.id)
   if (invalidIds.length > 0) return { ok: false, invalidIds, message: 'あかく なった ところを、やじるしで つないでね。' }
+  if (stage.loop) {
+    const loopStartNode = nodes.find((node) => node.action === 'loopStart')
+    const moveNode = nodes.find((node) => node.action === 'move')
+    const eatNode = nodes.find((node) => node.action === 'eat')
+    const loopEndNode = nodes.find((node) => node.action === 'loopEnd')
+    const startTarget = starts[0] && edges.find((edge) => edge.from === starts[0].id)?.to
+    const loopStartTarget = loopStartNode && edges.find((edge) => edge.from === loopStartNode.id)?.to
+    const moveTarget = moveNode && edges.find((edge) => edge.from === moveNode.id)?.to
+    const eatTarget = eatNode && edges.find((edge) => edge.from === eatNode.id)?.to
+    const loopEndTarget = loopEndNode && edges.find((edge) => edge.from === loopEndNode.id)?.to
+    if (!loopStartNode || !moveNode || !eatNode || !loopEndNode || startTarget !== loopStartNode.id || loopStartTarget !== moveNode.id || moveTarget !== eatNode.id || eatTarget !== loopEndNode.id || nodes.find((node) => node.id === loopEndTarget)?.action !== 'end') {
+      return { ok: false, invalidIds: nodes.map((node) => node.id), message: 'ループの はじまりと おわりで、「すすむ」と「たべる」を はさんで つないでね。' }
+    }
+    return { ok: true, order: [starts[0]] }
+  }
   if (!reachesEnd(starts[0], nodes, edges, new Set())) return { ok: false, invalidIds: nodes.map((node) => node.id), message: 'どちらの みちも「おわり」まで つないでね。' }
 
   const order: FlowNode[] = []
@@ -65,7 +89,19 @@ export function applyAction(state: RunState, action: FlowNode['action'], stage: 
     if (stage.box && !state.boxOpened) return { ...state, status: 'error', message: 'まず はこを あけて、なかみを たしかめよう。' }
     return { ...state, afterDecision: true, message: stage.decision?.answer === 'yes' ? 'なかみは おもちゃだよ。「はい」の みちへ すすむよ。' : 'なかみは おやつだよ。「いいえ」の みちへ すすむよ。' }
   }
-  if (action === 'end') return state.status === 'success' ? state : { ...state, status: 'error', message: 'はこの なかみを つかう まえに、おわりに なっているよ。' }
+  if (action === 'end') {
+    if (stage.loop && state.loopCount >= stage.loop.repeatUntil) {
+    return { ...state, status: 'success', message: `${stage.loop.repeatUntil}こ の おやつを たべたよ！` }
+    }
+    return state.status === 'success' ? state : { ...state, status: 'error', message: 'はこの なかみを つかう まえに、おわりに なっているよ。' }
+  }
+  if (action === 'loopStart') {
+    return { ...state, message: state.loopCount === 0 ? `${stage.loop?.repeatUntil ?? ''}回、くりかえしてみよう。` : `もういちど すすんで、おやつを たべるよ。` }
+  }
+  if (action === 'loopEnd') {
+    const isComplete = state.loopCount >= (stage.loop?.repeatUntil ?? 0)
+    return { ...state, message: isComplete ? 'くりかえしが おわったよ！' : 'まだ くりかえすよ。' }
+  }
   if (action === 'move') {
     const next = { ...state.cat, x: state.cat.x + 1 }
     if (next.x >= stage.grid.columns) return { ...state, status: 'error', message: 'これいじょう すすむと、みちから はずれちゃうよ。' }
@@ -88,6 +124,12 @@ export function applyAction(state: RunState, action: FlowNode['action'], stage: 
     return { ...state, boxOpened: true, heldItem, hasToy: heldItem === 'toy', message: 'はこを あけたよ。なかみを たしかめよう。' }
   }
   if (action === 'eat') {
+    if (stage.loop) {
+      const snack = stage.snacks?.[state.loopCount]
+      if (!snack || state.cat.x !== snack.x || state.cat.y !== snack.y) return { ...state, status: 'error', message: 'おやつが ある ばしょで「たべる」を つかおう。' }
+      const loopCount = state.loopCount + 1
+      return { ...state, loopCount, message: `おやつを ${loopCount}こ たべたよ！` }
+    }
     if (state.heldItem !== 'snack') return { ...state, status: 'error', message: 'おやつが ある ときに「たべる」を つかおう。' }
     return { ...state, heldItem: 'none', status: 'success', message: 'おやつを おいしく たべたよ！' }
   }

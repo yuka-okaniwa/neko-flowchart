@@ -17,7 +17,7 @@ export function FlowchartGuide({ catImagePath, catAlt, onBack }: FlowchartGuideP
         <div className="guide-hero">
           <img src={catImagePath} alt={catAlt} />
           <div>
-            <p className="guide-kicker">ねこ社員と 学ぼう！</p>
+            <p className="guide-kicker">ねこ<ruby>社員<rt>しゃいん</rt></ruby>と 学ぼう！</p>
             <h1>フローチャートとは？</h1>
             <p><ruby>物事<rt>ものごと</rt></ruby>を する<ruby>順番<rt>じゅんばん</rt></ruby>を、<br />記号と やじるしで <ruby>見<rt>み</rt></ruby>えるように したものだよ。</p>
           </div>
@@ -35,6 +35,7 @@ export function FlowchartGuide({ catImagePath, catAlt, onBack }: FlowchartGuideP
             <div className="guide-symbol-card"><span className="guide-symbol terminal">はじめ／おわり</span><div><h3>はじめ・おわり</h3><p>手順の スタートと ゴールを あらわすよ。</p></div></div>
             <div className="guide-symbol-card"><span className="guide-symbol process">すること</span><div><h3><ruby>処理<rt>しょり</rt></ruby></h3><p>「1マス すすむ」のように、することを 書くよ。</p></div></div>
             <div className="guide-symbol-card"><span className="guide-symbol decision">？</span><div><h3><ruby>判断<rt>はんだん</rt></ruby></h3><p>「はい」と「いいえ」で、つぎの道を えらぶよ。</p></div></div>
+            <div className="guide-symbol-card"><span className="guide-loop-symbols"><span className="guide-loop-symbol loop-start">はじめ</span><span className="guide-loop-symbol loop-end">おわり</span></span><div><h3><ruby>反復端子<rt>はんぷくたんし</rt></ruby></h3><p>「3回 くりかえす」がループの <ruby>開始<rt>かいし</rt></ruby>、「ここまで くりかえす」がループの <ruby>終了<rt>しゅうりょう</rt></ruby>。2つで くりかえす 範囲を はさむよ。</p></div></div>
           </div>
         </section>
 
@@ -46,7 +47,7 @@ export function FlowchartGuide({ catImagePath, catAlt, onBack }: FlowchartGuideP
           </div>
         </section>
 
-        <section className="guide-tip"><h2>ねこ社員との おやくそく</h2><p>ねこ社員が まよわないように、やじるしを とぎれさせずに つないでね。できたら「うごかす」で、手順が あっているか たしかめよう！</p></section>
+        <section className="guide-tip"><h2>ねこ<ruby>社員<rt>しゃいん</rt></ruby>との おやくそく</h2><p>ねこ<ruby>社員<rt>しゃいん</rt></ruby>が まよわないように、やじるしを とぎれさせずに つないでね。できたら「うごかす」で、手順が あっているか たしかめよう！</p></section>
       </article>
     </main>
   )
