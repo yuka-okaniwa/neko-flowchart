@@ -249,10 +249,10 @@ button {
   inset: 0;
   content: '';
   background: #e8ddf4;
-  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%, 0 24%);
+  clip-path: polygon(12% 0, 88% 0, 100% 24%, 100% 100%, 0 100%, 0 24%);
 }
 .palette-node.loopEnd::before {
-  clip-path: polygon(0 0, 100% 0, 100% 76%, 88% 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 88% 100%, 12% 100%, 0 76%);
 }
 .palette-node:disabled {
   opacity: 0.36;
@@ -416,10 +416,10 @@ button {
   inset: 0;
   content: '';
   background: #e8ddf4;
-  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%, 0 24%);
+  clip-path: polygon(12% 0, 88% 0, 100% 24%, 100% 100%, 0 100%, 0 24%);
 }
 .flow-node.loopEnd::before {
-  clip-path: polygon(0 0, 100% 0, 100% 76%, 88% 100%, 0 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 88% 100%, 12% 100%, 0 76%);
 }
 .node-label {
   position: relative;
