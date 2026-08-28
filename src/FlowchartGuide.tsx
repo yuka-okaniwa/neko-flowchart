@@ -9,7 +9,7 @@ export function FlowchartGuide({ catImagePath, catAlt, onBack }: FlowchartGuideP
   return (
     <main className="app-shell guide-screen">
       <header className="topbar">
-        <div className="logo"><img src="/images/company-logo.png" alt="会社ロゴ" /></div>
+        <div className="logo"><img src="./images/company-logo.png" alt="会社ロゴ" /></div>
         <button className="home-button" onClick={onBack}>ホームに戻る</button>
       </header>
 

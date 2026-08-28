@@ -238,7 +238,7 @@ export default function App() {
   if (screen === 'home') {
     return (
       <main className="app-shell home-screen">
-        <header className="topbar"><div className="logo"><img src="/images/company-logo.png" alt="会社ロゴ" /></div><button className="guide-link" onClick={() => setScreen('guide')}>フローチャートとは？</button></header>
+        <header className="topbar"><div className="logo"><img src="./images/company-logo.png" alt="会社ロゴ" /></div><button className="guide-link" onClick={() => setScreen('guide')}>フローチャートとは？</button></header>
         <section className="home-hero">
         <h1>ねこ<ruby>社員<rt>しゃいん</rt></ruby>とフローチャート</h1>
         <p>ねこ<ruby>社員<rt>しゃいん</rt></ruby>と フローチャートを まなぼう！</p></section>
@@ -254,7 +254,7 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <header className="topbar"><div className="logo"><img src="/images/company-logo.png" alt="会社ロゴ" /></div><div className="stage-title"><span className="difficulty">{stage.difficulty}</span><h1>{stage.id === 'how-to-play' ? stage.title : `ステージ ${stages.findIndex((availableStage) => availableStage.id === stage.id)}　${stage.title}`}</h1></div><div className="header-actions"><button className="home-button" onClick={() => setScreen('home')}>ホームに戻る</button><button className="reset-button" onClick={reset}><ruby>最初<rt>さいしょ</rt></ruby>から</button></div></header>
+      <header className="topbar"><div className="logo"><img src="./images/company-logo.png" alt="会社ロゴ" /></div><div className="stage-title"><span className="difficulty">{stage.difficulty}</span><h1>{stage.id === 'how-to-play' ? stage.title : `ステージ ${stages.findIndex((availableStage) => availableStage.id === stage.id)}　${stage.title}`}</h1></div><div className="header-actions"><button className="home-button" onClick={() => setScreen('home')}>ホームに戻る</button><button className="reset-button" onClick={reset}><ruby>最初<rt>さいしょ</rt></ruby>から</button></div></header>
       <section className="intro"><div className="cat-portrait"><img src={introCat.imagePath} alt={introCat.alt} /></div><p className="stage-description">{stage.description.map((part, index) => part.ruby ? <ruby key={index}>{part.text}<rt>{part.ruby}</rt></ruby> : <span className="stage-description" key={index}>{part.text}</span>)}</p></section><p className={stage.tutorial ? 'tutorial-guide' : 'stage-hint'}>{stage.tutorial ? tutorialMessage(tutorialStep) : `ヒント：${stage.hint}`}</p>
       <div className="game-layout">
         <aside className="palette panel"><h2><ruby>使<rt>つか</rt></ruby>う <ruby>記号<rt>きごう</rt></ruby></h2><p>ドラッグしてね</p>{stage.availableActions.map((action) => <button key={action} className={`palette-node ${action} ${tutorialStep?.type === 'place' && tutorialStep.action === action ? 'tutorial-target' : ''}`} onPointerDown={(event) => startNewAction(event, action)}>{labelFor(action)}<small>{action === 'decision' ? <><ruby>判断<rt>はんだん</rt></ruby></> : action === 'loopStart' || action === 'loopEnd' ? <><ruby>繰<rt>く</rt></ruby>り<ruby>返<rt>かえ</rt></ruby>し</> : <><ruby>処理<rt>しょり</rt></ruby></>}</small></button>)}</aside>

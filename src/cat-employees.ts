@@ -8,7 +8,7 @@ export const catEmployees: CatEmployee[] = [
   {
     id: 'mii',
     name: 'みぃ',
-    imagePath: '/images/nekosyain/mii.png',
+    imagePath: './images/nekosyain/mii.png',
     alt: 'ねこ社員 みぃ',
     profile: {
       role: 'ベテラン',
@@ -19,7 +19,7 @@ export const catEmployees: CatEmployee[] = [
   {
     id: 'furom',
     name: 'ふろむ',
-    imagePath: '/images/nekosyain/furom1.png',
+    imagePath: './images/nekosyain/furom1.png',
     alt: 'ねこ社員 ふろむ',
     profile: {
       role: '新人',
