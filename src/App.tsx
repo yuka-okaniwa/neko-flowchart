@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { applyAction, nextFlowNode, validateFlow } from './flow-engine'
 import { catEmployees } from './cat-employees'
 import { FlowchartGuide } from './FlowchartGuide'
+import { LoopGuide } from './LoopGuide'
 import { stages } from './stages'
 import { canConnectTutorialNodes, canPlaceTutorialAction, getCurrentTutorialStep, isTutorialConnectionTarget, tutorialMessage } from './tutorial'
 import type { Action, FlowEdge, FlowNode, RunState, StageDefinition } from './types'
@@ -38,7 +39,7 @@ export default function App() {
   const selectedCat = catEmployees.find((catEmployee) => catEmployee.id === selectedCatId) ?? catEmployees[0]
   const introCat = catEmployees.find((catEmployee) => catEmployee.id === 'mii') ?? selectedCat
   const [activeStage, setActiveStage] = useState<StageDefinition>(stages[0])
-  const [screen, setScreen] = useState<'home' | 'stage' | 'guide'>('home')
+  const [screen, setScreen] = useState<'home' | 'stage' | 'guide' | 'loop-guide'>('home')
   const [showLegend, setShowLegend] = useState(false)
   const stage = activeStage
   // ステージごとの判断文がある場合は、判断図形の表示に使う。
@@ -231,6 +232,11 @@ export default function App() {
     setEdges([])
     setInvalidIds([])
     setRunState(freshRunState(nextStage))
+    if (nextStage.loop) {
+      setShowLegend(false)
+      setScreen('loop-guide')
+      return
+    }
     setScreen('stage')
     setShowLegend(nextStage.id !== 'how-to-play')
   }
@@ -250,6 +256,10 @@ export default function App() {
 
   if (screen === 'guide') {
     return <FlowchartGuide catImagePath={selectedCat.imagePath} catAlt={selectedCat.alt} onBack={() => setScreen('home')} />
+  }
+
+  if (screen === 'loop-guide') {
+    return <LoopGuide stage={stage} catImagePath={introCat.imagePath} catAlt={introCat.alt} onHome={goHome} onContinue={() => { setScreen('stage'); setShowLegend(true) }} />
   }
 
   return (

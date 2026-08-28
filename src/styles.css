@@ -37,13 +37,9 @@ button {
 .logo {
   display: flex;
   align-items: center;
-  width: 170px;
-  height: 54px;
-  padding: 7px 12px;
-  background: #fff;
-  border: 2px solid #ead7df;
-  border-radius: 16px;
-  box-shadow: 0 4px 0 rgba(166, 91, 120, 0.12);
+  width: 160px;
+  height: 42px;
+  padding: 0;
 }
 .logo img {
   width: 100%;
@@ -1019,6 +1015,139 @@ button {
 .guide-tip {
   background: #fff0b8;
   border-color: #efca57;
+}
+
+/* Loop guide */
+.loop-guide-content {
+  width: min(880px, 94vw);
+  margin: 36px auto;
+}
+
+.loop-guide-heading,
+.loop-guide-card,
+.loop-guide-tip {
+  margin-bottom: 20px;
+  padding: clamp(20px, 4vw, 34px);
+  background: #fff;
+  border: 2px solid #eddbe2;
+  border-radius: 24px;
+  box-shadow: 0 6px 0 rgba(166, 91, 120, 0.12);
+}
+
+.loop-guide-heading {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.loop-guide-heading img {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+}
+
+.loop-guide-heading p,
+.loop-guide-heading h1 {
+  margin: 0;
+}
+
+.loop-guide-heading p {
+  color: #815166;
+  font-weight: 900;
+}
+
+.loop-guide-heading h1 {
+  font-size: clamp(26px, 4vw, 40px);
+}
+
+.loop-guide-card h2,
+.loop-guide-tip h2 {
+  margin: 0 0 10px;
+}
+
+.loop-guide-card > p,
+.loop-guide-tip p {
+  margin: 0;
+  color: #705664;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.loop-guide-symbols {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  padding: 18px;
+  background: #fff8fb;
+  border-radius: 18px;
+}
+
+.loop-guide-symbols > div {
+  width: min(100%, 340px);
+  text-align: center;
+}
+
+.loop-guide-symbols h3,
+.loop-guide-symbols p {
+  margin: 6px 0 0;
+}
+
+.loop-guide-symbols p {
+  color: #705664;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.loop-guide-symbol,
+.loop-guide-process {
+  display: grid;
+  min-height: 68px;
+  padding: 10px 22px;
+  color: #513e63;
+  font-weight: 900;
+  background: #e8ddf4;
+  place-items: center;
+}
+
+.loop-guide-symbol.loop-start {
+  clip-path: polygon(12% 0, 100% 0, 100% 100%, 0 100%, 0 24%);
+}
+
+.loop-guide-symbol.loop-end {
+  clip-path: polygon(0 0, 100% 0, 100% 76%, 88% 100%, 0 100%);
+}
+
+.loop-guide-process {
+  color: #563f4b;
+  background: #faedf2;
+  border: 3px solid #d38ca2;
+  border-radius: 9px;
+}
+
+.loop-guide-arrow {
+  color: #76ae58;
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.loop-guide-tip {
+  background: #fff0b8;
+  border-color: #efca57;
+}
+
+.loop-guide-continue {
+  display: block;
+  width: min(360px, 100%);
+  margin: 0 auto;
+  padding: 15px 22px;
+  color: white;
+  font-size: 19px;
+  font-weight: 900;
+  background: #8fce6b;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 5px 0 #6da54d;
 }
 
 .stage-cards {
