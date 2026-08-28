@@ -37,13 +37,9 @@ button {
 .logo {
   display: flex;
   align-items: center;
-  width: 170px;
-  height: 54px;
-  padding: 7px 12px;
-  background: #fff;
-  border: 2px solid #ead7df;
-  border-radius: 16px;
-  box-shadow: 0 4px 0 rgba(166, 91, 120, 0.12);
+  width: 160px;
+  height: 42px;
+  padding: 0;
 }
 .logo img {
   width: 100%;
