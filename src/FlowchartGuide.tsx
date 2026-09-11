@@ -1,3 +1,5 @@
+import { GuidePages } from './GuidePages'
+
 type FlowchartGuideProps = {
   catImagePath: string
   catAlt: string
@@ -13,7 +15,7 @@ export function FlowchartGuide({ catImagePath, catAlt, onBack }: FlowchartGuideP
         <button className="home-button" onClick={onBack}>ホームに戻る</button>
       </header>
 
-      <article className="guide-content">
+      <article className="guide-content"><GuidePages>
         <div className="guide-hero">
           <img src={catImagePath} alt={catAlt} />
           <div>
@@ -30,7 +32,7 @@ export function FlowchartGuide({ catImagePath, catAlt, onBack }: FlowchartGuideP
         </section>
 
         <section className="guide-section">
-          <h2>よく つかう 3つの 記号</h2>
+          <h2>よく つかう 記号</h2>
           <div className="guide-symbols">
             <div className="guide-symbol-card"><span className="guide-symbol terminal">はじめ／おわり</span><div><h3>はじめ・おわり</h3><p>手順の スタートと ゴールを あらわすよ。</p></div></div>
             <div className="guide-symbol-card"><span className="guide-symbol process">すること</span><div><h3><ruby>処理<rt>しょり</rt></ruby></h3><p>「1マス すすむ」のように、することを 書くよ。</p></div></div>
@@ -48,7 +50,7 @@ export function FlowchartGuide({ catImagePath, catAlt, onBack }: FlowchartGuideP
         </section>
 
         <section className="guide-tip"><h2>ねこ<ruby>社員<rt>しゃいん</rt></ruby>との おやくそく</h2><p>ねこ<ruby>社員<rt>しゃいん</rt></ruby>が まよわないように、やじるしを とぎれさせずに つないでね。できたら「うごかす」で、手順が あっているか たしかめよう！</p></section>
-      </article>
+      </GuidePages></article>
     </main>
   )
 }

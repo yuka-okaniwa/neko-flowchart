@@ -65,7 +65,7 @@ export default function App() {
     const height = canvas?.clientHeight ?? 530
     return [
       { id: 'start-fixed', action: 'start', x: 28, y: 28 },
-      { id: 'end-fixed', action: 'end', x: Math.max(190, width - NODE_WIDTH - 28), y: Math.max(180, height - NODE_HEIGHT - 28) },
+      { id: 'end-fixed', action: 'end', x: Math.max(16, width - NODE_WIDTH - 32), y: Math.max(16, height - NODE_HEIGHT - 32) },
     ]
   }
 
@@ -95,6 +95,23 @@ export default function App() {
     return () => window.cancelAnimationFrame(frameId)
   }, [screen])
 
+  // ブラウザのバーやヒントで領域が縮んでも、配置済みの記号を画面内に保つ。
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (screen !== 'stage' || !canvas) return
+    const observer = new ResizeObserver(() => {
+      const maxX = Math.max(16, canvas.clientWidth - NODE_WIDTH - 32)
+      const maxY = Math.max(16, canvas.clientHeight - NODE_HEIGHT - 32)
+      setNodes((current) => current.map((node) => {
+        const x = Math.max(16, Math.min(maxX, node.x))
+        const y = Math.max(16, Math.min(maxY, node.y))
+        return x === node.x && y === node.y ? node : { ...node, x, y }
+      }))
+    })
+    observer.observe(canvas)
+    return () => observer.disconnect()
+  }, [screen])
+
   // 通常ステージのヒントは、開いてから5分後に自動で表示する。
   useEffect(() => {
     if (screen !== 'stage' || stage.tutorial) return
@@ -112,8 +129,8 @@ export default function App() {
   function nodePosition(point: { x: number; y: number }) {
     const canvas = canvasRef.current!
     return {
-      x: Math.max(0, Math.min(canvas.clientWidth - NODE_WIDTH, point.x - NODE_WIDTH / 2)),
-      y: Math.max(0, Math.min(canvas.clientHeight - NODE_HEIGHT, point.y - NODE_HEIGHT / 2)),
+      x: Math.max(16, Math.min(canvas.clientWidth - NODE_WIDTH - 32, point.x - NODE_WIDTH / 2)),
+      y: Math.max(16, Math.min(canvas.clientHeight - NODE_HEIGHT - 32, point.y - NODE_HEIGHT / 2)),
     }
   }
 
@@ -124,8 +141,8 @@ export default function App() {
         const point = canvasPoint(event)
         setNodes((current) => current.map((node) => node.id === dragging.id ? {
           ...node,
-          x: Math.max(0, Math.min(canvasRef.current!.clientWidth - NODE_WIDTH, point.x - dragging.offsetX)),
-          y: Math.max(0, Math.min(canvasRef.current!.clientHeight - NODE_HEIGHT, point.y - dragging.offsetY)),
+          x: Math.max(16, Math.min(canvasRef.current!.clientWidth - NODE_WIDTH - 32, point.x - dragging.offsetX)),
+          y: Math.max(16, Math.min(canvasRef.current!.clientHeight - NODE_HEIGHT - 32, point.y - dragging.offsetY)),
         } : node))
       }
       if (newAction) setNewActionPreview({ x: event.clientX, y: event.clientY })
@@ -274,7 +291,7 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main className="app-shell stage-screen">
       <header className="topbar"><div className="logo"><img src="./images/company-logo.png" alt="会社ロゴ" /></div><div className="stage-title"><span className="difficulty">{stage.difficulty}</span><h1>{stage.id === 'how-to-play' ? stage.title : `ステージ ${stages.findIndex((availableStage) => availableStage.id === stage.id)}　${stage.title}`}</h1></div><div className="header-actions"><button className="home-button" onClick={() => setScreen('home')}>ホームに戻る</button><button className="reset-button" onClick={reset}><ruby>最初<rt>さいしょ</rt></ruby>から</button></div></header>
       <section className="intro"><div className="cat-portrait"><img src={introCat.imagePath} alt={introCat.alt} /></div><p className="stage-description">{stage.description.map((part, index) => part.ruby ? <ruby key={index}>{part.text}<rt>{part.ruby}</rt></ruby> : <span className="stage-description" key={index}>{part.text}</span>)}</p></section>{stage.tutorial ? <p className="tutorial-guide">{tutorialMessage(tutorialStep)}</p> : <section className="stage-hint"><button className="hint-toggle" onClick={() => setShowHint((current) => !current)} aria-expanded={showHint}>{showHint ? 'ヒントを かくす' : 'ヒントを みる'}</button>{showHint && <p>ヒント：{stage.hint}</p>}</section>}
       <div className="game-layout">
@@ -282,7 +299,7 @@ export default function App() {
         <section className={`editor panel ${tutorialStep?.type === 'place' ? 'tutorial-drop-target' : ''}`}><div className="editor-heading"><h2>フローチャート</h2><div className="editor-actions">{edges.length > 0 && <p className="arrow-help">やじるしを タッチすると けせるよ</p>}<button className="legend-button" onClick={() => setShowLegend(true)}><ruby>記号<rt>きごう</rt></ruby>の <ruby>説明<rt>せつめい</rt></ruby></button><button className={`run-button ${tutorialStep?.type === 'run' ? 'tutorial-target' : ''}`} onClick={runFlow} disabled={runState.status === 'running'}>▶ うごかす</button></div></div><div ref={canvasRef} className="canvas">
           <svg className="edge-layer" aria-label="やじるしを さわると けせます">{edges.map((edge) => { const from = nodes.find((node) => node.id === edge.from); const to = nodes.find((node) => node.id === edge.to); if (!from || !to) return null; const connector = edge.branch === 'yes' ? DECISION_YES_CONNECTOR : DECISION_NO_CONNECTOR; const x1 = from.x + (from.action === 'decision' ? connector.x : NODE_WIDTH / 2); const y1 = from.y + (from.action === 'decision' ? connector.y : NODE_HEIGHT); const x2 = to.x + NODE_WIDTH / 2; const y2 = to.y; // 下から上へつなぐ場合は、接続先の十分上を経由して下向きに端子へ入れる。
             const routeY = Math.max(10, y2 - 48); const routeX = x1 >= x2 ? x2 + 18 : x2 - 18; const points = to.y < from.y ? `${x1},${y1} ${routeX},${routeY} ${x2},${y2}` : `${x1},${y1} ${x2},${y2}`; return <g key={edge.id}><polyline className="edge-hit-area" points={points} fill="none" onPointerDown={(event) => { event.stopPropagation(); deleteEdge(edge.id) }} /><polyline className="edge-visible" points={points} fill="none" markerEnd="url(#arrow)" /></g> })}{connecting && connectionPreview && (() => { const from = nodes.find((node) => node.id === connecting.id); const connector = connecting.branch === 'yes' ? DECISION_YES_CONNECTOR : DECISION_NO_CONNECTOR; const x1 = from ? from.x + (from.action === 'decision' ? connector.x : NODE_WIDTH / 2) : 0; const y1 = from ? from.y + (from.action === 'decision' ? connector.y : NODE_HEIGHT) : 0; return from && <line className="edge-preview" x1={x1} y1={y1} x2={connectionPreview.x} y2={connectionPreview.y} markerEnd="url(#arrow-preview)" /> })()}<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" /></marker><marker id="arrow-preview" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" /></marker></defs></svg>
-          {nodes.map((node) => <div key={node.id} className={`flow-node ${node.action} ${invalidIds.includes(node.id) ? 'invalid' : ''} ${isTutorialConnectionTarget(tutorialStep, node.action) ? 'tutorial-target' : ''}`} style={{ left: node.x, top: node.y }} onPointerDown={(event) => { if ((event.target as HTMLElement).classList.contains('connector') || (event.target as HTMLElement).classList.contains('delete-node')) return; event.preventDefault(); setDragging({ id: node.id, offsetX: event.nativeEvent.offsetX, offsetY: event.nativeEvent.offsetY }) }}>{node.action !== 'start' && node.action !== 'end' && <button className="delete-node" aria-label={`${labelFor(node.action)}を けす`} onPointerDown={(event) => { event.stopPropagation(); deleteNode(node.id) }} />}{node.action !== 'start' && <span className="connector input" data-input-id={node.id} title="ここへつなぐ" />}<span className="node-label">{labelFor(node.action)}</span>{node.action === 'decision' ? <><span className="connector output decision-output yes" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id, branch: 'yes' }); setConnectionPreview(canvasPoint(event)) }} title="はいをつなぐ" /><span className="connector output decision-output no" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id, branch: 'no' }); setConnectionPreview(canvasPoint(event)) }} title="いいえをつなぐ" /></> : node.action !== 'end' && <span className="connector output" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id }); setConnectionPreview(canvasPoint(event)) }} title="ここからつなぐ" />}</div>)}
+          {nodes.map((node) => <div key={node.id} className={`flow-node ${node.action} ${invalidIds.includes(node.id) ? 'invalid' : ''} ${isTutorialConnectionTarget(tutorialStep, node.action) ? 'tutorial-target' : ''}`} style={{ left: node.x, top: node.y }} onPointerDown={(event) => { if ((event.target as HTMLElement).classList.contains('connector') || (event.target as HTMLElement).classList.contains('delete-node')) return; event.preventDefault(); const box = event.currentTarget.getBoundingClientRect(); setDragging({ id: node.id, offsetX: event.clientX - box.left, offsetY: event.clientY - box.top }) }}>{node.action !== 'start' && node.action !== 'end' && <button className="delete-node" aria-label={`${labelFor(node.action)}を けす`} onPointerDown={(event) => { event.stopPropagation(); deleteNode(node.id) }} />}{node.action !== 'start' && <span className="connector input" data-input-id={node.id} title="ここへつなぐ" />}<span className="node-label">{labelFor(node.action)}</span>{node.action === 'decision' ? <><span className="connector output decision-output yes" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id, branch: 'yes' }); setConnectionPreview(canvasPoint(event)) }} title="はいをつなぐ" /><span className="connector output decision-output no" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id, branch: 'no' }); setConnectionPreview(canvasPoint(event)) }} title="いいえをつなぐ" /></> : node.action !== 'end' && <span className="connector output" onPointerDown={(event) => { event.stopPropagation(); event.preventDefault(); setConnecting({ id: node.id }); setConnectionPreview(canvasPoint(event)) }} title="ここからつなぐ" />}</div>)}
           {connecting && <div className="connection-hint">つなぎたい きごうの ● まで ドラッグ！</div>}
           {nodes.every((node) => node.action === 'start' || node.action === 'end') && <div className="empty-canvas">左の きごうを、ここに ドラッグしてね。</div>}
         </div></section>
